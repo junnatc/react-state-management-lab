@@ -1,11 +1,11 @@
-// src/App.jsx
 import '../src/App.css';
-import { useState } from "react";
+import { useState, useEffect } from 'react';
 
 const App = () => {
   const [team, setTeam] = useState([]);
   const [money, setMoney] = useState(100);
-  const [message, setMessage] = useState(""); // For displaying messages to the user
+  const [message, setMessage] = useState("");
+  const [fightingState, setFightingState] = useState({ updatedTeam: null, fighterPrice: 0 });
   const [zombieFighters, setZombieFighters] = useState([
     { name: 'Survivor', price: 12, strength: 6, agility: 4, img: 'https://via.placeholder.com/150/92c952' },
     { name: 'Scavenger', price: 10, strength: 5, agility: 5, img: 'https://via.placeholder.com/150/771796' },
@@ -24,19 +24,34 @@ const App = () => {
       setMessage('You do not have enough money to add this fighter.');
       return;
     }
+
     setTeam((prevTeam) => [...prevTeam, fighter]);
     setMoney((prevMoney) => prevMoney - fighter.price);
     setMessage(''); // Clear any previous message
   };
 
   const handleRemoveFighter = (fighter) => {
-    setTeam((prevTeam) => prevTeam.filter((item) => item.name !== fighter.name));
-    setMoney((prevMoney) => prevMoney + fighter.price);
+    const fighterPrice = fighter.price;
+
+    // Create a new team array without the removed fighter
+    const updatedTeam = team.filter(item => item.name !== fighter.name);
+
+    // Update team state
+    setFightingState({ updatedTeam, fighterPrice });
   };
+
+  // useEffect to update the money state after the team state has been updated
+  useEffect(() => {
+    if (fightingState.updatedTeam) {
+      setTeam(fightingState.updatedTeam);
+      setMoney(prevMoney => Math.min(prevMoney + fightingState.fighterPrice, 100));
+      setFightingState({ updatedTeam: null, fighterPrice: 0 }); // Reset fighting state
+    }
+  }, [fightingState]);
 
   const totalStrength = team.reduce((accumulator, fighter) => accumulator + fighter.strength, 0);
   const totalAgility = team.reduce((accumulator, fighter) => accumulator + fighter.agility, 0);
-  const totalMoney = money; // Money is updated directly in state
+  const totalMoney = money;
 
   return (
     <div className="app">
@@ -54,7 +69,7 @@ const App = () => {
       <ul className="zombie-fighter-list">
         {zombieFighters.map((fighter, index) => (
           <ZombieFighterListItem
-            key={index} // Use index as a key if id is not available
+            key={index}
             fighter={fighter}
             onAdd={() => handleAddFighter(fighter)}
             onRemove={() => handleRemoveFighter(fighter)}
@@ -78,4 +93,3 @@ const ZombieFighterListItem = ({ fighter, onAdd, onRemove }) => (
 );
 
 export default App;
-
